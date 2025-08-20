@@ -7,7 +7,7 @@ ENV PYTHONUNBUFFERED=1
 ENV PIP_NO_CACHE_DIR=1
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# Install system dependencies
+# Install system dependencies including CUDA
 RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
@@ -23,6 +23,7 @@ RUN apt-get update && apt-get install -y \
     libxext6 \
     libxrender1 \
     dnsutils \
+    nvidia-cuda-toolkit \
     && rm -rf /var/lib/apt/lists/*
 
 # Create app directory
@@ -36,7 +37,7 @@ RUN cd ComfyUI-Easy-Install && \
     python3 -m venv venv && \
     . venv/bin/activate && \
     pip install --upgrade pip && \
-    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu --no-cache-dir && \
+    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121 --no-cache-dir && \
     rm -rf ComfyUI && \
     git clone https://github.com/comfyanonymous/ComfyUI.git && \
     cd ComfyUI && \
@@ -58,7 +59,7 @@ if [ ! -f "ComfyUI/main.py" ]; then\n\
     echo "Error: ComfyUI not found!"\n\
     exit 1\n\
 fi\n\
-echo "Starting ComfyUI..."\n\
+echo "Starting ComfyUI with GPU support..."\n\
 exec python ComfyUI/main.py --listen 0.0.0.0 --port 8188 "$@"' > /app/start.sh && \
     chmod +x /app/start.sh
 
