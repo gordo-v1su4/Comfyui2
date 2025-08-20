@@ -1,4 +1,4 @@
-# ComfyUI Easy Install Dockerfile for Coolify
+# ComfyUI Easy Install Dockerfile for Coolify with GPU support
 FROM ubuntu:22.04
 
 # Set environment variables
@@ -7,7 +7,7 @@ ENV PYTHONUNBUFFERED=1
 ENV PIP_NO_CACHE_DIR=1
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# Install system dependencies and CUDA runtime libraries
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
@@ -32,21 +32,43 @@ WORKDIR /app
 # Copy the Helper-CEI files
 COPY Helper-CEI/ComfyUI-Easy-Install/ ./ComfyUI-Easy-Install/
 
-# Set up Python environment and install ComfyUI
+# Create virtual environment first
 RUN cd ComfyUI-Easy-Install && \
-    python3 -m venv venv && \
+    python3 -m venv venv
+
+# Upgrade pip separately
+RUN cd ComfyUI-Easy-Install && \
     . venv/bin/activate && \
-    pip install --upgrade pip && \
-    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118 --no-cache-dir && \
+    pip install --upgrade pip wheel setuptools
+
+# Install PyTorch components one by one to reduce memory usage
+RUN cd ComfyUI-Easy-Install && \
+    . venv/bin/activate && \
+    pip install torch==2.1.0+cu118 --index-url https://download.pytorch.org/whl/cu118 --no-cache-dir
+
+RUN cd ComfyUI-Easy-Install && \
+    . venv/bin/activate && \
+    pip install torchvision==0.16.0+cu118 --index-url https://download.pytorch.org/whl/cu118 --no-cache-dir
+
+RUN cd ComfyUI-Easy-Install && \
+    . venv/bin/activate && \
+    pip install torchaudio==2.1.0+cu118 --index-url https://download.pytorch.org/whl/cu118 --no-cache-dir
+
+# Clone ComfyUI
+RUN cd ComfyUI-Easy-Install && \
     rm -rf ComfyUI && \
-    git clone https://github.com/comfyanonymous/ComfyUI.git && \
+    git clone https://github.com/comfyanonymous/ComfyUI.git
+
+# Install ComfyUI requirements
+RUN cd ComfyUI-Easy-Install && \
+    . venv/bin/activate && \
     cd ComfyUI && \
     pip install -r requirements.txt --no-cache-dir
 
 # Set working directory to ComfyUI installation
 WORKDIR /app/ComfyUI-Easy-Install
 
-# Create startup script with better error handling
+# Create startup script with GPU support
 RUN echo '#!/bin/bash\n\
 set -e\n\
 cd /app/ComfyUI-Easy-Install\n\
