@@ -26,6 +26,13 @@ RUN apt-get update && apt-get install -y \
     dnsutils \
     && rm -rf /var/lib/apt/lists/*
 
+# Install NVIDIA Container Toolkit utilities (for GPU detection)
+RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.0-1_all.deb && \
+    dpkg -i cuda-keyring_1.0-1_all.deb && \
+    apt-get update && \
+    apt-get install -y nvidia-utils-535 || true && \
+    rm -rf /var/lib/apt/lists/* cuda-keyring_1.0-1_all.deb
+
 # Create app directory
 WORKDIR /app
 
@@ -82,6 +89,13 @@ if [ ! -f "ComfyUI/main.py" ]; then\n\
     exit 1\n\
 fi\n\
 echo "Starting ComfyUI with GPU support..."\n\
+echo "Checking for NVIDIA GPU..."\n\
+if command -v nvidia-smi &> /dev/null; then\n\
+    echo "NVIDIA GPU detected:"\n\
+    nvidia-smi --query-gpu=name,driver_version,memory.total --format=csv\n\
+else\n\
+    echo "Warning: nvidia-smi not found. GPU may not be properly configured."\n\
+fi\n\
 exec python ComfyUI/main.py --listen 0.0.0.0 --port 8188 "$@"' > /app/start.sh && \
     chmod +x /app/start.sh
 

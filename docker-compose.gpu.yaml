@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  comfyui:
+    build: .
+    image: comfyui-easy-install:latest
+    ports:
+      - "8188:8188"
+    volumes:
+      - ./models:/app/ComfyUI-Easy-Install/ComfyUI/models
+      - ./output:/app/ComfyUI-Easy-Install/ComfyUI/output
+      - ./input:/app/ComfyUI-Easy-Install/ComfyUI/input
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
