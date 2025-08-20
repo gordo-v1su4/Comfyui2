@@ -18,9 +18,9 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512
-      # GPU settings (uncomment if using GPU)
-      # - NVIDIA_VISIBLE_DEVICES=all
-      # - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      # GPU settings - required for GPU passthrough
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8188/"]
@@ -34,5 +34,9 @@ services:
           memory: 8G
         reservations:
           memory: 4G
-    # Uncomment for GPU support
-    # runtime: nvidia
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    # GPU runtime - required for NVIDIA GPU support
+    runtime: nvidia
