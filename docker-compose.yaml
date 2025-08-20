@@ -1,5 +1,12 @@
 version: '3.8'
 
+# Optional: Create external network first with:
+# docker network create ai-network
+networks:
+  default:
+    name: ai-network
+    external: false  # Set to true if using existing network
+
 services:
   comfyui-easy-install:
     build: .

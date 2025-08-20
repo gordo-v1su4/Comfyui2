@@ -96,7 +96,7 @@ if command -v nvidia-smi &> /dev/null; then\n\
 else\n\
     echo "Warning: nvidia-smi not found. GPU may not be properly configured."\n\
 fi\n\
-exec python ComfyUI/main.py --listen 0.0.0.0 --port 8188 "$@"' > /app/start.sh && \
+exec python ComfyUI/main.py --listen 0.0.0.0 --port 8188 --enable-cors-header "*" "$@"' > /app/start.sh && \
     chmod +x /app/start.sh
 
 # Create directories for volume mounts
