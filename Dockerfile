@@ -30,7 +30,7 @@ WORKDIR /app
 
 # Copy installation files
 COPY ComfyUI-Easy-Install-Linux.sh ./
-COPY Helper-CEI.zip ./
+COPY Helper-CEI/ ./
 
 # Make script executable and run installation
 RUN chmod +x ComfyUI-Easy-Install-Linux.sh && \
