@@ -28,16 +28,18 @@ RUN apt-get update && apt-get install -y \
 # Create app directory
 WORKDIR /app
 
-# Copy the already extracted ComfyUI Easy Install files
+# Copy the Helper-CEI files
 COPY Helper-CEI/ComfyUI-Easy-Install/ ./ComfyUI-Easy-Install/
 
-# Set up Python environment
+# Set up Python environment and install ComfyUI
 RUN cd ComfyUI-Easy-Install && \
     python3 -m venv venv && \
     . venv/bin/activate && \
     pip install --upgrade pip && \
-    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu && \
-    pip install -r ComfyUI/requirements.txt
+    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu --no-cache-dir && \
+    git clone https://github.com/comfyanonymous/ComfyUI.git && \
+    cd ComfyUI && \
+    pip install -r requirements.txt --no-cache-dir
 
 # Set working directory to ComfyUI installation
 WORKDIR /app/ComfyUI-Easy-Install
