@@ -1,5 +1,5 @@
-# ComfyUI Easy Install Dockerfile for Coolify
-FROM ubuntu:22.04
+# ComfyUI Easy Install Dockerfile for Coolify with GPU support
+FROM nvidia/cuda:11.8-devel-ubuntu22.04
 
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive
@@ -7,7 +7,7 @@ ENV PYTHONUNBUFFERED=1
 ENV PIP_NO_CACHE_DIR=1
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# Install system dependencies including CUDA
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
@@ -23,7 +23,6 @@ RUN apt-get update && apt-get install -y \
     libxext6 \
     libxrender1 \
     dnsutils \
-    nvidia-cuda-toolkit \
     && rm -rf /var/lib/apt/lists/*
 
 # Create app directory
