@@ -1,5 +1,5 @@
-# ComfyUI Easy Install Dockerfile for Coolify with GPU support
-FROM nvidia/cuda:11.8-devel-ubuntu22.04
+# ComfyUI Easy Install Dockerfile for Coolify
+FROM ubuntu:22.04
 
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive
@@ -7,7 +7,7 @@ ENV PYTHONUNBUFFERED=1
 ENV PIP_NO_CACHE_DIR=1
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# Install system dependencies
+# Install system dependencies and CUDA runtime libraries
 RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
@@ -22,6 +22,7 @@ RUN apt-get update && apt-get install -y \
     libsm6 \
     libxext6 \
     libxrender1 \
+    libgomp1 \
     dnsutils \
     && rm -rf /var/lib/apt/lists/*
 
@@ -36,7 +37,7 @@ RUN cd ComfyUI-Easy-Install && \
     python3 -m venv venv && \
     . venv/bin/activate && \
     pip install --upgrade pip && \
-    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121 --no-cache-dir && \
+    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118 --no-cache-dir && \
     rm -rf ComfyUI && \
     git clone https://github.com/comfyanonymous/ComfyUI.git && \
     cd ComfyUI && \
