@@ -49,11 +49,11 @@ RUN cd ComfyUI-Easy-Install && \
     . venv/bin/activate && \
     pip install --upgrade pip wheel setuptools
 
-# Install PyTorch 2.7.0 with CUDA 12.1 to match V45 build for SwarmUI compatibility
-# Using CUDA 12.1 as it's compatible and available for Linux containers
+# Install PyTorch 2.5.1 with CUDA 12.1 (latest stable version)
+# Note: 2.7.0 seen in V45 is likely a nightly/Windows-specific build
 RUN cd ComfyUI-Easy-Install && \
     . venv/bin/activate && \
-    pip install torch==2.7.0 torchvision==0.22.0 torchaudio==2.7.0 \
+    pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 \
     --index-url https://download.pytorch.org/whl/cu121 --no-cache-dir
 
 # Install torchsde for sampling methods
