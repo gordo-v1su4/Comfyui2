@@ -72,6 +72,12 @@ RUN cd ComfyUI-Easy-Install && \
     cd ComfyUI && \
     pip install -r requirements.txt --no-cache-dir
 
+# Install ComfyUI Manager and essential custom nodes
+RUN cd ComfyUI-Easy-Install/ComfyUI/custom_nodes && \
+    git clone https://github.com/ltdrdata/ComfyUI-Manager.git && \
+    cd ComfyUI-Manager && \
+    ../../../venv/bin/pip install -r requirements.txt --no-cache-dir || true
+
 # Set working directory to ComfyUI installation
 WORKDIR /app/ComfyUI-Easy-Install
 
