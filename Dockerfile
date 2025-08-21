@@ -142,7 +142,6 @@ exec python ComfyUI/main.py \\\n\
     --listen 0.0.0.0 \\\n\
     --port 8188 \\\n\
     --enable-cors-header "*" \\\n\
-    --extra-model-paths-config extra_model_paths.yaml \\\n\
     "$@"\n\
 ' > /app/start.sh && chmod +x /app/start.sh
 
