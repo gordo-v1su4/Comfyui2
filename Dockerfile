@@ -72,11 +72,7 @@ RUN cd ComfyUI-Easy-Install && \
     cd ComfyUI && \
     pip install -r requirements.txt --no-cache-dir
 
-# Install ComfyUI Manager and essential custom nodes
-RUN cd ComfyUI-Easy-Install/ComfyUI/custom_nodes && \
-    git clone https://github.com/ltdrdata/ComfyUI-Manager.git && \
-    cd ComfyUI-Manager && \
-    ../../../venv/bin/pip install -r requirements.txt --no-cache-dir || true
+# Note: ComfyUI Manager will be installed at runtime to persist with volume mounts
 
 # Set working directory to ComfyUI installation
 WORKDIR /app/ComfyUI-Easy-Install
@@ -103,6 +99,20 @@ fi\n\
 # Wait for S3 mounts (Coolify) to be ready\n\
 echo "⏳ Waiting for storage mounts..."\n\
 sleep 5\n\
+\n\
+# Install ComfyUI Manager if not already present\n\
+if [ ! -d "ComfyUI/custom_nodes/ComfyUI-Manager" ]; then\n\
+    echo "📦 Installing ComfyUI Manager..."\n\
+    cd ComfyUI/custom_nodes\n\
+    git clone https://github.com/ltdrdata/ComfyUI-Manager.git\n\
+    if [ -f "ComfyUI-Manager/requirements.txt" ]; then\n\
+        ../../venv/bin/pip install -r ComfyUI-Manager/requirements.txt --no-cache-dir || true\n\
+    fi\n\
+    cd ../..\n\
+    echo "✅ ComfyUI Manager installed"\n\
+else\n\
+    echo "✅ ComfyUI Manager already installed"\n\
+fi\n\
 \n\
 # Create model subdirectories if they dont exist\n\
 echo "📁 Setting up model directories..."\n\
