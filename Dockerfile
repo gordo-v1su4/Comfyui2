@@ -162,8 +162,8 @@ RUN mkdir -p /app/ComfyUI-Easy-Install/ComfyUI/models \
 # Expose port
 EXPOSE 8188
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
+# Health check with longer start period for initial model loading
+HEALTHCHECK --interval=30s --timeout=10s --start-period=300s --retries=5 \
     CMD curl -f http://localhost:8188/ || exit 1
 
 # Start ComfyUI
