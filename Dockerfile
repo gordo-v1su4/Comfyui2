@@ -72,6 +72,15 @@ RUN cd ComfyUI-Easy-Install && \
     cd ComfyUI && \
     pip install -r requirements.txt --no-cache-dir
 
+# Fix dependency issues for ComfyUI-Manager
+RUN cd ComfyUI-Easy-Install && \
+    . venv/bin/activate && \
+    pip install --upgrade "numpy<2.0" && \
+    pip install gitpython && \
+    pip install uv && \
+    pip install aiofiles && \
+    echo "✅ Dependencies fixed for ComfyUI-Manager"
+
 # Note: ComfyUI Manager will be installed at runtime to persist with volume mounts
 
 # Set working directory to ComfyUI installation
@@ -108,10 +117,14 @@ if [ ! -d "ComfyUI/custom_nodes/ComfyUI-Manager" ]; then\n\
     if [ -f "ComfyUI-Manager/requirements.txt" ]; then\n\
         ../../venv/bin/pip install -r ComfyUI-Manager/requirements.txt --no-cache-dir || true\n\
     fi\n\
+    # Ensure dependencies are correct\n\
+    ../../venv/bin/pip install --upgrade "numpy<2.0" gitpython uv aiofiles --no-cache-dir || true\n\
     cd ../..\n\
     echo "✅ ComfyUI Manager installed"\n\
 else\n\
     echo "✅ ComfyUI Manager already installed"\n\
+    # Still ensure dependencies are correct on restart\n\
+    venv/bin/pip install --upgrade "numpy<2.0" gitpython uv aiofiles --no-cache-dir || true\n\
 fi\n\
 \n\
 # Create model subdirectories if they dont exist\n\
