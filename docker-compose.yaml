@@ -76,7 +76,7 @@ services:
     container_name: comfyui-easy-install
     # Override command to ensure dependencies are fixed
     command: >
-      sh -c "
+      bash -c "
       source /app/ComfyUI-Easy-Install/venv/bin/activate &&
       pip install --upgrade 'numpy<2.0' gitpython uv aiofiles --no-cache-dir &&
       /app/start.sh
