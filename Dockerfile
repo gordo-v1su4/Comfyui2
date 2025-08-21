@@ -37,36 +37,57 @@ RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86
 # Create app directory
 WORKDIR /app
 
-# Copy the Helper-CEI files
-COPY Helper-CEI/ComfyUI-Easy-Install/ ./ComfyUI-Easy-Install/
+# Clone the Linux-compatible ComfyUI-Easy-Install instead of copying Windows version
+RUN git clone --single-branch --branch MAC-Linux https://github.com/Tavris1/ComfyUI-Easy-Install.git
 
-# Create virtual environment first
+# Make installation script executable and run it
 RUN cd ComfyUI-Easy-Install && \
-    python3 -m venv venv
+    chmod +x LinuxComfyUI-Easy-Install.sh && \
+    ./LinuxComfyUI-Easy-Install.sh || true
 
-# Upgrade pip separately
+# Ensure venv exists and upgrade pip
 RUN cd ComfyUI-Easy-Install && \
+    if [ ! -d "venv" ]; then python3 -m venv venv; fi && \
     . venv/bin/activate && \
     pip install --upgrade pip wheel setuptools
 
-# Install PyTorch 2.5.1 with CUDA 12.1 (latest stable version)
-# Note: 2.7.0 seen in V45 is likely a nightly/Windows-specific build
-RUN cd ComfyUI-Easy-Install && \
+# Install PyTorch 2.1.0 with CUDA 11.8 - the stable version this repo was designed for
+# Download with wget first to avoid hash mismatch issues
+RUN cd /tmp && \
+    wget --progress=bar:force:noscroll --tries=10 --timeout=120 \
+    https://download.pytorch.org/whl/cu118/torch-2.1.0%2Bcu118-cp310-cp310-linux_x86_64.whl && \
+    cd /app/ComfyUI-Easy-Install && \
     . venv/bin/activate && \
-    pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 \
-    --index-url https://download.pytorch.org/whl/cu121 --no-cache-dir
+    pip install /tmp/torch-2.1.0+cu118-cp310-cp310-linux_x86_64.whl --no-cache-dir && \
+    rm /tmp/torch-2.1.0+cu118-cp310-cp310-linux_x86_64.whl
+
+# Download and install torchvision
+RUN cd /tmp && \
+    wget --progress=bar:force:noscroll --tries=10 --timeout=120 \
+    https://download.pytorch.org/whl/cu118/torchvision-0.16.0%2Bcu118-cp310-cp310-linux_x86_64.whl && \
+    cd /app/ComfyUI-Easy-Install && \
+    . venv/bin/activate && \
+    pip install /tmp/torchvision-0.16.0+cu118-cp310-cp310-linux_x86_64.whl --no-cache-dir && \
+    rm /tmp/torchvision-0.16.0+cu118-cp310-cp310-linux_x86_64.whl
+
+# Download and install torchaudio
+RUN cd /tmp && \
+    wget --progress=bar:force:noscroll --tries=10 --timeout=120 \
+    https://download.pytorch.org/whl/cu118/torchaudio-2.1.0%2Bcu118-cp310-cp310-linux_x86_64.whl && \
+    cd /app/ComfyUI-Easy-Install && \
+    . venv/bin/activate && \
+    pip install /tmp/torchaudio-2.1.0+cu118-cp310-cp310-linux_x86_64.whl --no-cache-dir && \
+    rm /tmp/torchaudio-2.1.0+cu118-cp310-cp310-linux_x86_64.whl
 
 # Install torchsde for sampling methods
 RUN cd ComfyUI-Easy-Install && \
     . venv/bin/activate && \
     pip install torchsde==0.2.6 --no-cache-dir
 
-# Clone ComfyUI - get the specific commit that V45 uses
+# Clone ComfyUI - use the main branch for stability
 RUN cd ComfyUI-Easy-Install && \
     rm -rf ComfyUI && \
-    git clone https://github.com/comfyanonymous/ComfyUI.git && \
-    cd ComfyUI && \
-    git checkout 72fd4d22
+    git clone https://github.com/comfyanonymous/ComfyUI.git
 
 # Install ComfyUI requirements
 RUN cd ComfyUI-Easy-Install && \
@@ -74,14 +95,14 @@ RUN cd ComfyUI-Easy-Install && \
     cd ComfyUI && \
     pip install -r requirements.txt --no-cache-dir
 
-# Install additional dependencies for ComfyUI-Manager and compatibility
+# Fix dependency issues for ComfyUI-Manager
 RUN cd ComfyUI-Easy-Install && \
     . venv/bin/activate && \
+    pip install --upgrade "numpy<2.0" && \
     pip install gitpython && \
     pip install uv && \
     pip install aiofiles && \
-    pip install av && \
-    echo "✅ Dependencies installed for ComfyUI-Manager"
+    echo "✅ Dependencies fixed for ComfyUI-Manager"
 
 # Note: ComfyUI Manager will be installed at runtime to persist with volume mounts
 
