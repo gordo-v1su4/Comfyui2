@@ -14,14 +14,13 @@ services:
     ports:
       - "8188:8188"
     volumes:
-      # Persist models and outputs
-      - ./models:/app/ComfyUI-Easy-Install/ComfyUI/models
+      # Instance-specific storage (local)
       - ./output:/app/ComfyUI-Easy-Install/ComfyUI/output
       - ./input:/app/ComfyUI-Easy-Install/ComfyUI/input
       - ./temp:/app/ComfyUI-Easy-Install/ComfyUI/temp
       - ./user:/app/ComfyUI-Easy-Install/ComfyUI/user
-      # Optional: Mount custom nodes
-      - ./custom_nodes:/app/ComfyUI-Easy-Install/ComfyUI/custom_nodes
+      # Shared storage from Coolify S3 (models and custom nodes)
+      # NOTE: These will be mounted by Coolify when you attach the S3 storage
     environment:
       - PYTHONUNBUFFERED=1
       - PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512

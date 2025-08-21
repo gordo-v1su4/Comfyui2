@@ -39,6 +39,10 @@ WORKDIR /app
 # Copy the Helper-CEI files
 COPY Helper-CEI/ComfyUI-Easy-Install/ ./ComfyUI-Easy-Install/
 
+# Copy S3 integration scripts
+COPY init-s3-storage.sh /app/
+COPY start-comfyui-with-s3.sh /app/start.sh
+
 # Create virtual environment first
 RUN cd ComfyUI-Easy-Install && \
     python3 -m venv venv
@@ -75,29 +79,9 @@ RUN cd ComfyUI-Easy-Install && \
 # Set working directory to ComfyUI installation
 WORKDIR /app/ComfyUI-Easy-Install
 
-# Create startup script with GPU support
-RUN echo '#!/bin/bash\n\
-set -e\n\
-cd /app/ComfyUI-Easy-Install\n\
-if [ ! -f "venv/bin/activate" ]; then\n\
-    echo "Error: Virtual environment not found!"\n\
-    exit 1\n\
-fi\n\
-source venv/bin/activate\n\
-if [ ! -f "ComfyUI/main.py" ]; then\n\
-    echo "Error: ComfyUI not found!"\n\
-    exit 1\n\
-fi\n\
-echo "Starting ComfyUI with GPU support..."\n\
-echo "Checking for NVIDIA GPU..."\n\
-if command -v nvidia-smi &> /dev/null; then\n\
-    echo "NVIDIA GPU detected:"\n\
-    nvidia-smi --query-gpu=name,driver_version,memory.total --format=csv\n\
-else\n\
-    echo "Warning: nvidia-smi not found. GPU may not be properly configured."\n\
-fi\n\
-exec python ComfyUI/main.py --listen 0.0.0.0 --port 8188 --enable-cors-header "*" "$@"' > /app/start.sh && \
-    chmod +x /app/start.sh
+# Set executable permissions for scripts
+RUN chmod +x /app/start.sh && \
+    chmod +x /app/init-s3-storage.sh
 
 # Create directories for volume mounts
 RUN mkdir -p /app/ComfyUI-Easy-Install/ComfyUI/models \
