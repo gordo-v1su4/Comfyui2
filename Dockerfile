@@ -1,4 +1,4 @@
-# ComfyUI Easy Install Dockerfile for Coolify with GPU support
+# ComfyUI Easy Install Dockerfile for Coolify with S3 Support
 FROM ubuntu:22.04
 
 # Set environment variables
@@ -39,10 +39,6 @@ WORKDIR /app
 # Copy the Helper-CEI files
 COPY Helper-CEI/ComfyUI-Easy-Install/ ./ComfyUI-Easy-Install/
 
-# Copy S3 integration scripts
-COPY init-s3-storage.sh /app/
-COPY start-comfyui-with-s3.sh /app/start.sh
-
 # Create virtual environment first
 RUN cd ComfyUI-Easy-Install && \
     python3 -m venv venv
@@ -79,9 +75,76 @@ RUN cd ComfyUI-Easy-Install && \
 # Set working directory to ComfyUI installation
 WORKDIR /app/ComfyUI-Easy-Install
 
-# Set executable permissions for scripts
-RUN chmod +x /app/start.sh && \
-    chmod +x /app/init-s3-storage.sh
+# Create startup script inline
+RUN echo '#!/bin/bash\n\
+set -e\n\
+echo "🚀 Starting ComfyUI with S3 integration..."\n\
+cd /app/ComfyUI-Easy-Install\n\
+\n\
+# Verify environment\n\
+if [ ! -f "venv/bin/activate" ]; then\n\
+    echo "❌ Error: Virtual environment not found!"\n\
+    exit 1\n\
+fi\n\
+\n\
+source venv/bin/activate\n\
+\n\
+if [ ! -f "ComfyUI/main.py" ]; then\n\
+    echo "❌ Error: ComfyUI not found!"\n\
+    exit 1\n\
+fi\n\
+\n\
+# Wait for S3 mounts (Coolify) to be ready\n\
+echo "⏳ Waiting for storage mounts..."\n\
+sleep 5\n\
+\n\
+# Create model subdirectories if they dont exist\n\
+echo "📁 Setting up model directories..."\n\
+mkdir -p ComfyUI/models/{checkpoints,vae,loras,controlnet,embeddings,upscale_models,clip_vision,diffusers,photomaker,insightface,faceanalysis,style_models,ipadapter,instantid,pulid}\n\
+chmod -R 755 ComfyUI/models/\n\
+\n\
+# Create extra model paths config\n\
+if [ ! -f "ComfyUI/extra_model_paths.yaml" ]; then\n\
+cat > ComfyUI/extra_model_paths.yaml << EOF_CONFIG\n\
+# ComfyUI Extra Model Paths - S3 Integration\n\
+comfyui:\n\
+    base_path: /app/ComfyUI-Easy-Install/ComfyUI/\n\
+    is_default: true\n\
+    checkpoints: models/checkpoints/\n\
+    vae: models/vae/\n\
+    loras: models/loras/\n\
+    controlnet: models/controlnet/\n\
+    embeddings: models/embeddings/\n\
+    upscale_models: models/upscale_models/\n\
+    clip_vision: models/clip_vision/\n\
+EOF_CONFIG\n\
+    echo "📝 Created extra_model_paths.yaml"\n\
+fi\n\
+\n\
+# GPU Detection\n\
+echo "🎮 Checking GPU availability..."\n\
+if command -v nvidia-smi &> /dev/null; then\n\
+    echo "🔥 NVIDIA GPU detected:"\n\
+    nvidia-smi --query-gpu=name,driver_version,memory.total --format=csv,noheader,nounits 2>/dev/null || echo "GPU info unavailable"\n\
+else\n\
+    echo "⚠️  Warning: nvidia-smi not found. Running in CPU mode."\n\
+fi\n\
+\n\
+# Display storage info\n\
+echo "📊 Storage Information:"\n\
+echo "   📁 Models: $(ls -la ComfyUI/models 2>/dev/null | wc -l) subdirectories"\n\
+echo "   🔌 Custom nodes: $(ls -la ComfyUI/custom_nodes 2>/dev/null | wc -l) items"\n\
+\n\
+echo "🌐 Starting ComfyUI server on port 8188..."\n\
+echo "📦 ComfyUI Manager downloads will go to S3 storage (if mounted)"\n\
+\n\
+exec python ComfyUI/main.py \\\n\
+    --listen 0.0.0.0 \\\n\
+    --port 8188 \\\n\
+    --enable-cors-header "*" \\\n\
+    --extra-model-paths-config extra_model_paths.yaml \\\n\
+    "$@"\n\
+' > /app/start.sh && chmod +x /app/start.sh
 
 # Create directories for volume mounts
 RUN mkdir -p /app/ComfyUI-Easy-Install/ComfyUI/models \

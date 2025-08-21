@@ -1,32 +1,108 @@
 version: '3.8'
 
-# Optional: Create external network first with:
-# docker network create ai-network
+# Shared network for all AI services
 networks:
-  default:
-    name: ai-network
-    external: false  # Set to true if using existing network
+  ai-network:
+    driver: bridge
+    external: false
+
+# Named volumes for persistent data
+volumes:
+  minio-data:
+    driver: local
+  models-storage:
+    driver: local
+  custom-nodes-storage:
+    driver: local
 
 services:
-  comfyui-easy-install:
+  # MinIO S3-compatible storage (optional - enable with 'minio' profile)
+  minio:
+    image: 'quay.io/minio/minio:latest'
+    container_name: minio-storage
+    command: 'server /data --console-address ":9001"'
+    environment:
+      - MINIO_SERVER_URL=${MINIO_SERVER_URL:-http://localhost:9000}
+      - MINIO_BROWSER_REDIRECT_URL=${MINIO_BROWSER_REDIRECT_URL:-http://localhost:9001}
+      - MINIO_ROOT_USER=${SERVICE_USER_MINIO:-minioadmin}
+      - MINIO_ROOT_PASSWORD=${SERVICE_PASSWORD_MINIO:-minioadmin123}
+    volumes:
+      - 'minio-data:/data'
+    ports:
+      - "9000:9000"   # API
+      - "9001:9001"   # Console
+    networks:
+      - ai-network
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 20s
+      retries: 10
+    restart: unless-stopped
+    profiles:
+      - minio  # Start with: docker-compose --profile minio up
+
+  # MinIO bucket initializer (optional)
+  minio-init:
+    image: minio/mc:latest
+    container_name: minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    networks:
+      - ai-network
+    environment:
+      - MINIO_ENDPOINT=http://minio:9000
+      - MINIO_ACCESS_KEY=${SERVICE_USER_MINIO:-minioadmin}
+      - MINIO_SECRET_KEY=${SERVICE_PASSWORD_MINIO:-minioadmin123}
+    entrypoint: |
+      /bin/sh -c "
+      echo '🔧 Initializing MinIO buckets for AI models...'
+      mc alias set myminio http://minio:9000 \$$MINIO_ACCESS_KEY \$$MINIO_SECRET_KEY
+      mc mb myminio/ai-models --ignore-existing
+      mc anonymous set public myminio/ai-models
+      for dir in checkpoints vae loras controlnet embeddings upscale_models clip_vision diffusers; do
+        echo \"# \$dir models directory\" | mc pipe myminio/ai-models/models/\$dir/.keep
+      done
+      echo '✅ MinIO bucket initialization complete!'
+      "
+    restart: "no"
+    profiles:
+      - minio
+
+  # Main ComfyUI service
+  comfyui:
     build: .
     container_name: comfyui-easy-install
     ports:
       - "8188:8188"
+    networks:
+      - ai-network
     volumes:
       # Instance-specific storage (local)
       - ./output:/app/ComfyUI-Easy-Install/ComfyUI/output
       - ./input:/app/ComfyUI-Easy-Install/ComfyUI/input
       - ./temp:/app/ComfyUI-Easy-Install/ComfyUI/temp
       - ./user:/app/ComfyUI-Easy-Install/ComfyUI/user
-      # Shared storage from Coolify S3 (models and custom nodes)
-      # NOTE: These will be mounted by Coolify when you attach the S3 storage
+      
+      # Model and Custom Node storage
+      # For Coolify: These will be replaced with S3 mounts
+      # For standalone: These use local Docker volumes
+      - models-storage:/app/ComfyUI-Easy-Install/ComfyUI/models
+      - custom-nodes-storage:/app/ComfyUI-Easy-Install/ComfyUI/custom_nodes
     environment:
       - PYTHONUNBUFFERED=1
       - PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512
       # GPU settings - required for GPU passthrough
       - NVIDIA_VISIBLE_DEVICES=all
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      
+      # S3/MinIO configuration (optional)
+      - COMFYUI_S3_ENABLED=${COMFYUI_S3_ENABLED:-false}
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT:-http://minio:9000}
+      - MINIO_ACCESS_KEY=${SERVICE_USER_MINIO:-minioadmin}
+      - MINIO_SECRET_KEY=${SERVICE_PASSWORD_MINIO:-minioadmin123}
+      - MINIO_BUCKET_MODELS=${MINIO_BUCKET_MODELS:-ai-models}
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8188/"]
@@ -46,3 +122,36 @@ services:
               capabilities: [gpu]
     # GPU runtime - required for NVIDIA GPU support
     runtime: nvidia
+
+  # Optional: Second ComfyUI instance for testing
+  comfyui-secondary:
+    build: .
+    container_name: comfyui-secondary
+    ports:
+      - "8189:8188"
+    networks:
+      - ai-network
+    volumes:
+      # Instance-specific storage (local)
+      - ./output-secondary:/app/ComfyUI-Easy-Install/ComfyUI/output
+      - ./input:/app/ComfyUI-Easy-Install/ComfyUI/input
+      - ./temp-secondary:/app/ComfyUI-Easy-Install/ComfyUI/temp
+      - ./user-secondary:/app/ComfyUI-Easy-Install/ComfyUI/user
+      
+      # Shared model storage (same volumes as primary)
+      - models-storage:/app/ComfyUI-Easy-Install/ComfyUI/models
+      - custom-nodes-storage:/app/ComfyUI-Easy-Install/ComfyUI/custom_nodes
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:256  # Less memory
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - COMFYUI_S3_ENABLED=${COMFYUI_S3_ENABLED:-false}
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT:-http://minio:9000}
+      - MINIO_ACCESS_KEY=${SERVICE_USER_MINIO:-minioadmin}
+      - MINIO_SECRET_KEY=${SERVICE_PASSWORD_MINIO:-minioadmin123}
+      - MINIO_BUCKET_MODELS=${MINIO_BUCKET_MODELS:-ai-models}
+    restart: unless-stopped
+    runtime: nvidia
+    profiles:
+      - secondary  # Start with: docker-compose --profile secondary up
