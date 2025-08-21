@@ -49,10 +49,10 @@ RUN cd ComfyUI-Easy-Install && \
     . venv/bin/activate && \
     pip install --upgrade pip wheel setuptools
 
-# Install PyTorch components - download with wget for better reliability
-# Download torch first
+# Install PyTorch components - use multiple approaches for reliability
+# First attempt: Download with wget (more reliable for large files)
 RUN cd /tmp && \
-    wget -c --tries=5 --timeout=30 \
+    wget --progress=bar:force:noscroll --tries=10 --timeout=60 \
     https://download.pytorch.org/whl/cu118/torch-2.1.0%2Bcu118-cp310-cp310-linux_x86_64.whl && \
     cd /app/ComfyUI-Easy-Install && \
     . venv/bin/activate && \
@@ -61,16 +61,16 @@ RUN cd /tmp && \
 
 # Download and install torchvision
 RUN cd /tmp && \
-    wget -c --tries=5 --timeout=30 \
+    wget --progress=bar:force:noscroll --tries=10 --timeout=60 \
     https://download.pytorch.org/whl/cu118/torchvision-0.16.0%2Bcu118-cp310-cp310-linux_x86_64.whl && \
     cd /app/ComfyUI-Easy-Install && \
     . venv/bin/activate && \
     pip install /tmp/torchvision-0.16.0+cu118-cp310-cp310-linux_x86_64.whl --no-cache-dir && \
     rm /tmp/torchvision-0.16.0+cu118-cp310-cp310-linux_x86_64.whl
 
-# Download and install torchaudio
+# Download and install torchaudio  
 RUN cd /tmp && \
-    wget -c --tries=5 --timeout=30 \
+    wget --progress=bar:force:noscroll --tries=10 --timeout=60 \
     https://download.pytorch.org/whl/cu118/torchaudio-2.1.0%2Bcu118-cp310-cp310-linux_x86_64.whl && \
     cd /app/ComfyUI-Easy-Install && \
     . venv/bin/activate && \
