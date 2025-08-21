@@ -33,7 +33,7 @@ WORKDIR /app
 # Create virtual environment and upgrade pip
 RUN python3 -m venv venv && \
     . venv/bin/activate && \
-    python -m pip install --upgrade pip wheel setuptools
+    python -m pip install --upgrade pip wheel setuptools uv
 
 # Install PyTorch without hash checking
 RUN . venv/bin/activate && \
@@ -48,9 +48,9 @@ RUN . venv/bin/activate && \
     cd ComfyUI && \
     pip install -r requirements.txt
 
-# Install ComfyUI-Manager dependencies
+# Install ComfyUI-Manager dependencies (include 'uv' required by ComfyUI-Manager)
 RUN . venv/bin/activate && \
-    pip install gitpython aiofiles
+    pip install gitpython aiofiles uv
 
 # Create startup script
 RUN echo '#!/bin/bash' > /app/start.sh && \
