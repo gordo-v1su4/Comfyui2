@@ -74,29 +74,22 @@ services:
   comfyui:
     build: .
     container_name: comfyui-easy-install
-    # Override command to ensure dependencies are fixed
-    command: >
-      bash -c "
-      source /app/ComfyUI-Easy-Install/venv/bin/activate &&
-      pip install --upgrade 'numpy<2.0' gitpython uv aiofiles --no-cache-dir &&
-      /app/start.sh
-      "
     ports:
       - "8188:8188"
     networks:
       - ai-network
     volumes:
       # Instance-specific storage (local)
-      - ./output:/app/ComfyUI-Easy-Install/ComfyUI/output
-      - ./input:/app/ComfyUI-Easy-Install/ComfyUI/input
-      - ./temp:/app/ComfyUI-Easy-Install/ComfyUI/temp
-      - ./user:/app/ComfyUI-Easy-Install/ComfyUI/user
+      - ./output:/app/ComfyUI/output
+      - ./input:/app/ComfyUI/input
+      - ./temp:/app/ComfyUI/temp
+      - ./user:/app/ComfyUI/user
       
       # Model and Custom Node storage
       # For Coolify: These will be replaced with S3 mounts
       # For standalone: These use local Docker volumes
-      - models-storage:/app/ComfyUI-Easy-Install/ComfyUI/models
-      - custom-nodes-storage:/app/ComfyUI-Easy-Install/ComfyUI/custom_nodes
+      - models-storage:/app/ComfyUI/models
+      - custom-nodes-storage:/app/ComfyUI/custom_nodes
     environment:
       - PYTHONUNBUFFERED=1
       - PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512
@@ -140,14 +133,14 @@ services:
       - ai-network
     volumes:
       # Instance-specific storage (local)
-      - ./output-secondary:/app/ComfyUI-Easy-Install/ComfyUI/output
-      - ./input:/app/ComfyUI-Easy-Install/ComfyUI/input
-      - ./temp-secondary:/app/ComfyUI-Easy-Install/ComfyUI/temp
-      - ./user-secondary:/app/ComfyUI-Easy-Install/ComfyUI/user
+      - ./output-secondary:/app/ComfyUI/output
+      - ./input:/app/ComfyUI/input
+      - ./temp-secondary:/app/ComfyUI/temp
+      - ./user-secondary:/app/ComfyUI/user
       
       # Shared model storage (same volumes as primary)
-      - models-storage:/app/ComfyUI-Easy-Install/ComfyUI/models
-      - custom-nodes-storage:/app/ComfyUI-Easy-Install/ComfyUI/custom_nodes
+      - models-storage:/app/ComfyUI/models
+      - custom-nodes-storage:/app/ComfyUI/custom_nodes
     environment:
       - PYTHONUNBUFFERED=1
       - PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:256  # Less memory
