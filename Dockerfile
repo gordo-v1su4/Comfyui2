@@ -49,20 +49,33 @@ RUN cd ComfyUI-Easy-Install && \
     . venv/bin/activate && \
     pip install --upgrade pip wheel setuptools
 
-# Install PyTorch components one by one to reduce memory usage
-# Clear any potential cache issues and use direct URLs
-RUN cd ComfyUI-Easy-Install && \
+# Install PyTorch components - download with wget for better reliability
+# Download torch first
+RUN cd /tmp && \
+    wget -c --tries=5 --timeout=30 \
+    https://download.pytorch.org/whl/cu118/torch-2.1.0%2Bcu118-cp310-cp310-linux_x86_64.whl && \
+    cd /app/ComfyUI-Easy-Install && \
     . venv/bin/activate && \
-    pip cache purge || true && \
-    pip install https://download.pytorch.org/whl/cu118/torch-2.1.0%2Bcu118-cp310-cp310-linux_x86_64.whl --no-cache-dir
+    pip install /tmp/torch-2.1.0+cu118-cp310-cp310-linux_x86_64.whl --no-cache-dir && \
+    rm /tmp/torch-2.1.0+cu118-cp310-cp310-linux_x86_64.whl
 
-RUN cd ComfyUI-Easy-Install && \
+# Download and install torchvision
+RUN cd /tmp && \
+    wget -c --tries=5 --timeout=30 \
+    https://download.pytorch.org/whl/cu118/torchvision-0.16.0%2Bcu118-cp310-cp310-linux_x86_64.whl && \
+    cd /app/ComfyUI-Easy-Install && \
     . venv/bin/activate && \
-    pip install https://download.pytorch.org/whl/cu118/torchvision-0.16.0%2Bcu118-cp310-cp310-linux_x86_64.whl --no-cache-dir
+    pip install /tmp/torchvision-0.16.0+cu118-cp310-cp310-linux_x86_64.whl --no-cache-dir && \
+    rm /tmp/torchvision-0.16.0+cu118-cp310-cp310-linux_x86_64.whl
 
-RUN cd ComfyUI-Easy-Install && \
+# Download and install torchaudio
+RUN cd /tmp && \
+    wget -c --tries=5 --timeout=30 \
+    https://download.pytorch.org/whl/cu118/torchaudio-2.1.0%2Bcu118-cp310-cp310-linux_x86_64.whl && \
+    cd /app/ComfyUI-Easy-Install && \
     . venv/bin/activate && \
-    pip install https://download.pytorch.org/whl/cu118/torchaudio-2.1.0%2Bcu118-cp310-cp310-linux_x86_64.whl --no-cache-dir
+    pip install /tmp/torchaudio-2.1.0+cu118-cp310-cp310-linux_x86_64.whl --no-cache-dir && \
+    rm /tmp/torchaudio-2.1.0+cu118-cp310-cp310-linux_x86_64.whl
 
 # Clone ComfyUI
 RUN cd ComfyUI-Easy-Install && \
