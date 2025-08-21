@@ -49,38 +49,24 @@ RUN cd ComfyUI-Easy-Install && \
     . venv/bin/activate && \
     pip install --upgrade pip wheel setuptools
 
-# Install PyTorch components - use multiple approaches for reliability
-# First attempt: Download with wget (more reliable for large files)
-RUN cd /tmp && \
-    wget --progress=bar:force:noscroll --tries=10 --timeout=60 \
-    https://download.pytorch.org/whl/cu118/torch-2.1.0%2Bcu118-cp310-cp310-linux_x86_64.whl && \
-    cd /app/ComfyUI-Easy-Install && \
+# Install PyTorch 2.7.0 with CUDA 12.1 to match V45 build for SwarmUI compatibility
+# Using CUDA 12.1 as it's compatible and available for Linux containers
+RUN cd ComfyUI-Easy-Install && \
     . venv/bin/activate && \
-    pip install /tmp/torch-2.1.0+cu118-cp310-cp310-linux_x86_64.whl --no-cache-dir && \
-    rm /tmp/torch-2.1.0+cu118-cp310-cp310-linux_x86_64.whl
+    pip install torch==2.7.0 torchvision==0.22.0 torchaudio==2.7.0 \
+    --index-url https://download.pytorch.org/whl/cu121 --no-cache-dir
 
-# Download and install torchvision
-RUN cd /tmp && \
-    wget --progress=bar:force:noscroll --tries=10 --timeout=60 \
-    https://download.pytorch.org/whl/cu118/torchvision-0.16.0%2Bcu118-cp310-cp310-linux_x86_64.whl && \
-    cd /app/ComfyUI-Easy-Install && \
+# Install torchsde for sampling methods
+RUN cd ComfyUI-Easy-Install && \
     . venv/bin/activate && \
-    pip install /tmp/torchvision-0.16.0+cu118-cp310-cp310-linux_x86_64.whl --no-cache-dir && \
-    rm /tmp/torchvision-0.16.0+cu118-cp310-cp310-linux_x86_64.whl
+    pip install torchsde==0.2.6 --no-cache-dir
 
-# Download and install torchaudio  
-RUN cd /tmp && \
-    wget --progress=bar:force:noscroll --tries=10 --timeout=60 \
-    https://download.pytorch.org/whl/cu118/torchaudio-2.1.0%2Bcu118-cp310-cp310-linux_x86_64.whl && \
-    cd /app/ComfyUI-Easy-Install && \
-    . venv/bin/activate && \
-    pip install /tmp/torchaudio-2.1.0+cu118-cp310-cp310-linux_x86_64.whl --no-cache-dir && \
-    rm /tmp/torchaudio-2.1.0+cu118-cp310-cp310-linux_x86_64.whl
-
-# Clone ComfyUI
+# Clone ComfyUI - get the specific commit that V45 uses
 RUN cd ComfyUI-Easy-Install && \
     rm -rf ComfyUI && \
-    git clone https://github.com/comfyanonymous/ComfyUI.git
+    git clone https://github.com/comfyanonymous/ComfyUI.git && \
+    cd ComfyUI && \
+    git checkout 72fd4d22
 
 # Install ComfyUI requirements
 RUN cd ComfyUI-Easy-Install && \
@@ -88,14 +74,14 @@ RUN cd ComfyUI-Easy-Install && \
     cd ComfyUI && \
     pip install -r requirements.txt --no-cache-dir
 
-# Fix dependency issues for ComfyUI-Manager
+# Install additional dependencies for ComfyUI-Manager and compatibility
 RUN cd ComfyUI-Easy-Install && \
     . venv/bin/activate && \
-    pip install --upgrade "numpy<2.0" && \
     pip install gitpython && \
     pip install uv && \
     pip install aiofiles && \
-    echo "✅ Dependencies fixed for ComfyUI-Manager"
+    pip install av && \
+    echo "✅ Dependencies installed for ComfyUI-Manager"
 
 # Note: ComfyUI Manager will be installed at runtime to persist with volume mounts
 
@@ -134,13 +120,13 @@ if [ ! -d "ComfyUI/custom_nodes/ComfyUI-Manager" ]; then\n\
         ../../venv/bin/pip install -r ComfyUI-Manager/requirements.txt --no-cache-dir || true\n\
     fi\n\
     # Ensure dependencies are correct\n\
-    ../../venv/bin/pip install --upgrade "numpy<2.0" gitpython uv aiofiles --no-cache-dir || true\n\
+    ../../venv/bin/pip install gitpython uv aiofiles av --no-cache-dir || true\n\
     cd ../..\n\
     echo "✅ ComfyUI Manager installed"\n\
 else\n\
     echo "✅ ComfyUI Manager already installed"\n\
     # Still ensure dependencies are correct on restart\n\
-    venv/bin/pip install --upgrade "numpy<2.0" gitpython uv aiofiles --no-cache-dir || true\n\
+    venv/bin/pip install gitpython uv aiofiles av --no-cache-dir || true\n\
 fi\n\
 \n\
 # Create model subdirectories if they dont exist\n\
