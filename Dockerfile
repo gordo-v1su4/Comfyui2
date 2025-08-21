@@ -50,17 +50,19 @@ RUN cd ComfyUI-Easy-Install && \
     pip install --upgrade pip wheel setuptools
 
 # Install PyTorch components one by one to reduce memory usage
+# Clear any potential cache issues and use direct URLs
 RUN cd ComfyUI-Easy-Install && \
     . venv/bin/activate && \
-    pip install torch==2.1.0+cu118 --index-url https://download.pytorch.org/whl/cu118 --no-cache-dir
+    pip cache purge || true && \
+    pip install https://download.pytorch.org/whl/cu118/torch-2.1.0%2Bcu118-cp310-cp310-linux_x86_64.whl --no-cache-dir
 
 RUN cd ComfyUI-Easy-Install && \
     . venv/bin/activate && \
-    pip install torchvision==0.16.0+cu118 --index-url https://download.pytorch.org/whl/cu118 --no-cache-dir
+    pip install https://download.pytorch.org/whl/cu118/torchvision-0.16.0%2Bcu118-cp310-cp310-linux_x86_64.whl --no-cache-dir
 
 RUN cd ComfyUI-Easy-Install && \
     . venv/bin/activate && \
-    pip install torchaudio==2.1.0+cu118 --index-url https://download.pytorch.org/whl/cu118 --no-cache-dir
+    pip install https://download.pytorch.org/whl/cu118/torchaudio-2.1.0%2Bcu118-cp310-cp310-linux_x86_64.whl --no-cache-dir
 
 # Clone ComfyUI
 RUN cd ComfyUI-Easy-Install && \
