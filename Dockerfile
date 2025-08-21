@@ -51,38 +51,11 @@ RUN cd ComfyUI-Easy-Install && \
     . venv/bin/activate && \
     pip install --upgrade pip wheel setuptools
 
-# Install PyTorch 2.1.0 with CUDA 11.8 - the stable version this repo was designed for
-# Download with wget first to avoid hash mismatch issues
-RUN cd /tmp && \
-    wget --progress=bar:force:noscroll --tries=10 --timeout=120 \
-    https://download.pytorch.org/whl/cu118/torch-2.1.0%2Bcu118-cp310-cp310-linux_x86_64.whl && \
-    cd /app/ComfyUI-Easy-Install && \
-    . venv/bin/activate && \
-    pip install /tmp/torch-2.1.0+cu118-cp310-cp310-linux_x86_64.whl --no-cache-dir && \
-    rm /tmp/torch-2.1.0+cu118-cp310-cp310-linux_x86_64.whl
-
-# Download and install torchvision
-RUN cd /tmp && \
-    wget --progress=bar:force:noscroll --tries=10 --timeout=120 \
-    https://download.pytorch.org/whl/cu118/torchvision-0.16.0%2Bcu118-cp310-cp310-linux_x86_64.whl && \
-    cd /app/ComfyUI-Easy-Install && \
-    . venv/bin/activate && \
-    pip install /tmp/torchvision-0.16.0+cu118-cp310-cp310-linux_x86_64.whl --no-cache-dir && \
-    rm /tmp/torchvision-0.16.0+cu118-cp310-cp310-linux_x86_64.whl
-
-# Download and install torchaudio
-RUN cd /tmp && \
-    wget --progress=bar:force:noscroll --tries=10 --timeout=120 \
-    https://download.pytorch.org/whl/cu118/torchaudio-2.1.0%2Bcu118-cp310-cp310-linux_x86_64.whl && \
-    cd /app/ComfyUI-Easy-Install && \
-    . venv/bin/activate && \
-    pip install /tmp/torchaudio-2.1.0+cu118-cp310-cp310-linux_x86_64.whl --no-cache-dir && \
-    rm /tmp/torchaudio-2.1.0+cu118-cp310-cp310-linux_x86_64.whl
-
-# Install torchsde for sampling methods
+# Install PyTorch with pip directly - this was working before
 RUN cd ComfyUI-Easy-Install && \
     . venv/bin/activate && \
-    pip install torchsde==0.2.6 --no-cache-dir
+    pip install torch==2.1.0 torchvision==0.16.0 torchaudio==2.1.0 \
+    --index-url https://download.pytorch.org/whl/cu118 --no-cache-dir
 
 # Clone ComfyUI - use the main branch for stability
 RUN cd ComfyUI-Easy-Install && \
@@ -141,13 +114,13 @@ if [ ! -d "ComfyUI/custom_nodes/ComfyUI-Manager" ]; then\n\
         ../../venv/bin/pip install -r ComfyUI-Manager/requirements.txt --no-cache-dir || true\n\
     fi\n\
     # Ensure dependencies are correct\n\
-    ../../venv/bin/pip install gitpython uv aiofiles av --no-cache-dir || true\n\
+    ../../venv/bin/pip install --upgrade "numpy<2.0" gitpython uv aiofiles --no-cache-dir || true\n\
     cd ../..\n\
     echo "✅ ComfyUI Manager installed"\n\
 else\n\
     echo "✅ ComfyUI Manager already installed"\n\
     # Still ensure dependencies are correct on restart\n\
-    venv/bin/pip install gitpython uv aiofiles av --no-cache-dir || true\n\
+    venv/bin/pip install --upgrade "numpy<2.0" gitpython uv aiofiles --no-cache-dir || true\n\
 fi\n\
 \n\
 # Create model subdirectories if they dont exist\n\
