@@ -40,7 +40,7 @@ RUN python3 -m venv venv && \
 # Install with specific versions to avoid corrupted packages
 RUN . venv/bin/activate && \
     pip install --upgrade pip wheel setuptools && \
-    pip install numpy && \
+    pip install "numpy<2" && \
     pip install --no-cache-dir torch==2.1.0+cu118 --index-url https://download.pytorch.org/whl/cu118 && \
     pip install --no-cache-dir torchvision==0.16.0+cu118 --index-url https://download.pytorch.org/whl/cu118 && \
     pip install --no-cache-dir torchaudio==2.1.0+cu118 --index-url https://download.pytorch.org/whl/cu118
