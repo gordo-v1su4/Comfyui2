@@ -44,6 +44,21 @@ The repository supports multiple deployment patterns:
 
 ## Common Development Commands
 
+### Model Downloader (NEW)
+```bash
+# Download Qwen image models to MinIO storage
+# Run inside the container after deployment
+docker exec -it comfyui-easy-install bash
+cd /app
+./Scripts/download_models_simple.sh
+
+# Models downloaded:
+# - qwen_image_vae.safetensors → /models/vae/
+# - qwen_image_edit_fp8_e4m3fn.safetensors → /models/diffusion_models/
+# - qwen_2.5_vl_7b_fp8_scaled.safetensors → /models/text_encoders/
+# - Qwen-Image-Lightning-4steps-V1.0.safetensors → /models/checkpoints/
+```
+
 ### Docker Operations
 ```bash
 # Build and start ComfyUI container
@@ -91,6 +106,12 @@ docker-compose up -d --build
 
 ### Model Management
 ```bash
+# Download pre-configured Qwen models (NEW)
+cd /app && ./Scripts/download_models_simple.sh
+
+# Edit models to download
+vi Scripts/models_to_download.json
+
 # Generate extra_model_paths.yaml for existing models
 cd /path/to/your/models && ./Scripts/Extra_Model_Paths_Maker.sh
 
@@ -190,6 +211,15 @@ PYTORCH_MPS_LOW_WATERMARK_RATIO=0.0
 
 ## Troubleshooting Reference
 
+### Build Issues (CRITICAL)
+**PyTorch Hash Verification Errors**:
+If you encounter "THESE PACKAGES DO NOT MATCH THE HASHES" errors:
+- The Dockerfile uses unpinned PyTorch versions to avoid hash mismatches
+- Let pip resolve versions automatically
+- DO NOT add version pins like `torch==2.1.0+cu118`
+- DO NOT use `--force-reinstall` or specify exact versions
+- Working approach: `pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118`
+
 ### Common Issues
 1. **GPU Not Detected**: 
    - Verify `nvidia-smi` works on host
@@ -245,5 +275,18 @@ The update system uses a sophisticated Git-based approach:
 2. **Self-Updating**: Update script updates itself when repository changes
 3. **Dependency Tracking**: Compares `requirements.txt` and installs changes
 4. **Stable Releases**: Optional `--stable` flag for tagged versions only
+
+## Model Downloader Scripts
+
+### Files Added
+- `Scripts/models_to_download.json` - Configuration file listing models to download
+- `Scripts/simple_model_downloader.py` - Python script handling download and MinIO upload
+- `Scripts/download_models_simple.sh` - Bash wrapper for easy execution
+
+### Usage
+1. Ensure MinIO credentials are set in environment
+2. Optional: Set `HF_TOKEN` for private Hugging Face models
+3. Run `./Scripts/download_models_simple.sh` inside container
+4. Models automatically upload to correct MinIO folders
 
 Access ComfyUI at `http://localhost:8188` after any deployment method.
