@@ -10,6 +10,8 @@ This is **ComfyUI-Easy-Install**, a comprehensive containerized deployment solut
 - **Multi-platform support**: Windows, Linux, macOS, and Docker deployments
 - **Cloud deployment** integrations with Coolify, Proxmox, and SwarmUI backend support
 - **Extensive custom node ecosystem** with 25+ pre-installed community extensions
+- **S3/MinIO integration** for centralized model storage across multiple instances
+- **GPU acceleration** with NVIDIA CUDA 11.8 support
 
 ## Key Architecture Components
 
@@ -55,11 +57,24 @@ docker-compose down
 
 # Rebuild without cache (after updates)
 docker-compose build --no-cache
+
+# Check container health status
+docker inspect comfyui-easy-install --format='{{.State.Health.Status}}'
+
+# Execute commands inside container
+docker exec -it comfyui-easy-install bash
+
+# Activate virtual environment in container
+docker exec -it comfyui-easy-install bash -c "source /app/venv/bin/activate && bash"
 ```
 
 ### Quick Deployment
 ```bash
-# Automated deployment with Coolify integration
+# Initial setup - copy environment template
+cp .env.example .env
+# Edit .env with your MinIO/S3 credentials
+
+# Automated deployment with Docker
 ./deploy.sh
 
 # Linux native installation 
@@ -68,6 +83,10 @@ chmod +x ComfyUI-Easy-Install-Linux.sh
 
 # Proxmox LXC container installation
 ./ComfyUI-Easy-Install-Linux.sh --proxmox
+
+# Manual Docker deployment
+mkdir -p models output input temp user custom_nodes
+docker-compose up -d --build
 ```
 
 ### Model Management
@@ -152,8 +171,12 @@ PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512
 NVIDIA_VISIBLE_DEVICES=all
 NVIDIA_DRIVER_CAPABILITIES=compute,utility
 
-# S3 Storage indicator
-COMFYUI_S3_READY=true
+# S3/MinIO Configuration (from .env file)
+COMFYUI_S3_ENABLED=true               # Enable S3 storage integration
+MINIO_ENDPOINT=http://minio:9000      # MinIO server endpoint
+MINIO_ACCESS_KEY=${SERVICE_USER_MINIO} # MinIO access credentials
+MINIO_SECRET_KEY=${SERVICE_PASSWORD_MINIO}
+MINIO_BUCKET_MODELS=ai-models         # S3 bucket for model storage
 
 # macOS Apple Silicon optimization
 PYTORCH_MPS_HIGH_WATERMARK_RATIO=0.0
@@ -168,10 +191,29 @@ PYTORCH_MPS_LOW_WATERMARK_RATIO=0.0
 ## Troubleshooting Reference
 
 ### Common Issues
-1. **GPU Not Detected**: Verify `nvidia-smi` works, check Docker GPU runtime
-2. **Out of Memory**: Reduce `max_split_size_mb`, use smaller models/batches
-3. **Custom Node Import Failures**: Check console for dependency conflicts
-4. **CORS Errors**: Already configured, try `http://127.0.0.1:8188` vs `localhost`
+1. **GPU Not Detected**: 
+   - Verify `nvidia-smi` works on host
+   - Ensure `nvidia-container-toolkit` is installed
+   - Check Docker runtime: `docker info | grep nvidia`
+   - Verify in container: `docker exec comfyui-easy-install nvidia-smi`
+
+2. **Out of Memory**: 
+   - Reduce `max_split_size_mb` in docker-compose.yaml
+   - Use smaller models/batches
+   - Monitor with: `docker stats comfyui-easy-install`
+
+3. **Custom Node Import Failures**: 
+   - Check console for dependency conflicts
+   - Install missing deps: `docker exec -it comfyui-easy-install bash -c "source /app/venv/bin/activate && pip install <package>"`
+
+4. **CORS Errors**: 
+   - Already configured with `--enable-cors-header "*"`
+   - Try `http://127.0.0.1:8188` vs `localhost`
+
+5. **S3/MinIO Connection Issues**:
+   - Verify MinIO is accessible: `curl http://minio:9000`
+   - Check credentials in `.env` file
+   - Ensure bucket exists: `docker exec comfyui-easy-install bash -c "./init-s3-storage.sh"`
 
 ### Performance Tuning
 - **Model Loading**: Models cached in memory after first load
