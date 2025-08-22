@@ -36,10 +36,14 @@ RUN python3 -m venv venv && \
     . venv/bin/activate && \
     python -m pip install --upgrade pip wheel setuptools uv
 
-# Install PyTorch without hash checking
+# Install PyTorch with improved reliability
+# Install with specific versions to avoid corrupted packages
 RUN . venv/bin/activate && \
-    pip config set global.trusted-host "pypi.org files.pythonhosted.org download.pytorch.org" && \
-    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+    pip install --upgrade pip wheel setuptools && \
+    pip install numpy && \
+    pip install --no-cache-dir torch==2.1.0+cu118 --index-url https://download.pytorch.org/whl/cu118 && \
+    pip install --no-cache-dir torchvision==0.16.0+cu118 --index-url https://download.pytorch.org/whl/cu118 && \
+    pip install --no-cache-dir torchaudio==2.1.0+cu118 --index-url https://download.pytorch.org/whl/cu118
 
 # Clone ComfyUI
 RUN git clone https://github.com/comfyanonymous/ComfyUI.git
