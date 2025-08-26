@@ -1,0 +1,11 @@
+# Curated custom nodes to install at deploy-time
+# Add/remove lines as needed. Lines starting with # are ignored.
+# Examples below are popular/community-safe; adjust to your needs.
+
+https://github.com/ltdrdata/ComfyUI-Manager.git
+https://github.com/WASasquatch/was-node-suite-comfyui.git
+https://github.com/ltdrdata/ComfyUI-Impact-Pack.git
+https://github.com/Fannovel16/comfyui_controlnet_aux.git
+# https://github.com/cubiq/ComfyUI_essentials.git
+# https://github.com/pythongosssss/ComfyUI-Custom-Scripts.git
+# https://github.com/Mikubill/sd-webui-controlnet.git

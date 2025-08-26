@@ -1,7 +1,28 @@
 services:
+  # One-shot init to prepare custom nodes and trigger model sync to MinIO
+  comfyui-init:
+    image: yanwk/comfyui-boot:cu128-slim
+    container_name: comfyui2-init
+    environment:
+      - HF_TOKEN=${HF_TOKEN}
+      - COMFYUI_S3_ENABLED=${COMFYUI_S3_ENABLED}
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT}
+      - MINIO_ACCESS_KEY=${SERVICE_USER_MINIO}
+      - MINIO_SECRET_KEY=${SERVICE_PASSWORD_MINIO}
+      - MINIO_BUCKET_MODELS=${MINIO_BUCKET_MODELS}
+    volumes:
+      - ./storage:/root
+      - ./Scripts:/root/Scripts:ro
+    # Install curated nodes and optionally download models to MinIO
+    command: ["bash", "-lc", "/root/Scripts/install_custom_nodes.sh && /root/Scripts/download_models_simple.sh || true"]
+    restart: "no"
+
   comfyui:
     image: yanwk/comfyui-boot:cu128-slim
     container_name: comfyui2
+    depends_on:
+      comfyui-init:
+        condition: service_completed_successfully
     ports:
       - "8188:8188"
     environment:
@@ -19,6 +40,7 @@ services:
       - MINIO_BUCKET_MODELS=${MINIO_BUCKET_MODELS}
     volumes:
       - ./storage:/root
+      - ./Scripts:/root/Scripts:ro
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8188/"]
