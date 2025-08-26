@@ -1,5 +1,5 @@
 # Stage 1: Use a standard image to fix line endings
-FROM debian:stable-slim as fixer
+FROM debian:stable-slim AS fixer
 
 # Install dos2unix
 RUN apt-get update && apt-get install -y dos2unix
