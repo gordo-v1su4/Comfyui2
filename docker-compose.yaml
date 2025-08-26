@@ -1,6 +1,6 @@
 services:
   comfyui:
-    image: yanwk/comfyui-boot:cu128-slim
+    image: gordov1su4/comfyui2:1.0
     container_name: comfyui2
     ports:
       - "8188:8188"
@@ -20,9 +20,8 @@ services:
       - HF_TOKEN=${HF_TOKEN}
     volumes:
       - ./storage:/root
-      - ./Scripts:/root/Scripts:ro
-    # Run startup wrapper if present; otherwise start ComfyUI directly.
-    command: ["bash","-lc","if [ -x /root/Scripts/startup.sh ]; then exec bash /root/Scripts/startup.sh; else echo 'startup.sh not found'; if [ -x /runner-script ]; then exec bash /runner-script; elif [ -f /root/ComfyUI/main.py ]; then exec python3 -u /root/ComfyUI/main.py --listen 0.0.0.0 --port 8188 --enable-cors-header \"*\"; else sleep infinity; fi; fi"]
+    # Run startup wrapper (baked in image under /opt/comfy-scripts); otherwise start ComfyUI directly.
+    command: ["bash","-lc","if [ -x /opt/comfy-scripts/startup.sh ]; then exec bash /opt/comfy-scripts/startup.sh; else echo 'startup.sh not found'; if [ -x /runner-script ]; then exec bash /runner-script; elif [ -f /root/ComfyUI/main.py ]; then exec python3 -u /root/ComfyUI/main.py --listen 0.0.0.0 --port 8188 --enable-cors-header \"*\"; else sleep infinity; fi; fi"]
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8188/"]
