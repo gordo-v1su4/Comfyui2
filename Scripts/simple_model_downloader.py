@@ -1,3 +1,13 @@
+def check_minio_file_exists(mc_path: str, bucket: str, model_type: str, filename: str) -> bool:
+    """Check if a file already exists in the MinIO bucket."""
+    minio_path = f"myminio/{bucket}/models/{model_type}/{filename}"
+    try:
+        result = subprocess.run([mc_path, "stat", minio_path], capture_output=True, text=True)
+        return result.returncode == 0
+    except Exception:
+        return False
+
+
 #!/usr/bin/env python3
 """
 Simple Model Downloader for ComfyUI with MinIO Support
@@ -19,9 +29,9 @@ MODELS_JSON = SCRIPT_DIR / "models_to_download.json"
 TEMP_DIR = Path("/tmp/model_downloads")
 
 # MinIO configuration from environment
-MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT", "http://minio:9000")
-MINIO_ACCESS_KEY = os.getenv("MINIO_ACCESS_KEY", os.getenv("SERVICE_USER_MINIO"))
-MINIO_SECRET_KEY = os.getenv("MINIO_SECRET_KEY", os.getenv("SERVICE_PASSWORD_MINIO"))
+MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT")
+MINIO_ACCESS_KEY = os.getenv("SERVICE_USER_MINIO")
+MINIO_SECRET_KEY = os.getenv("SERVICE_PASSWORD_MINIO")
 MINIO_BUCKET = os.getenv("MINIO_BUCKET_MODELS", "ai-models")
 
 # Hugging Face token (optional)
@@ -206,6 +216,12 @@ def main():
             print("❌ Missing URL or filename, skipping...")
             continue
         
+        # Check if the file already exists in MinIO
+        if check_minio_file_exists(mc_path, MINIO_BUCKET, model_type, filename):
+            print(f"⏩ Model already exists in MinIO: {filename}. Skipping download.")
+            success_count += 1
+            continue
+
         # Download file
         local_file = TEMP_DIR / filename
         if download_file(url, local_file):
