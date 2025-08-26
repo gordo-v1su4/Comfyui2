@@ -16,7 +16,7 @@ git push origin main
 ### 3. Run the downloader inside the container:
 ```bash
 # Access the container
-docker exec -it comfyui-easy-install bash
+docker exec -it comfyui2 bash
 
 # Run the downloader
 ./Scripts/download_models_simple.sh
