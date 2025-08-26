@@ -8,7 +8,7 @@ COPY Scripts /opt/comfy-scripts
 RUN apt-get update && apt-get install -y findutils && \
     set -eux; \
     if command -v sed >/dev/null 2>&1; then \
-      find /opt/comfy-scripts -type f \( -name \"*.sh\" -o -name \"*.txt\" \) -exec sed -i 's/\r$//' {} + ; \
+      find /opt/comfy-scripts -type f -name "*.sh" -exec sed -i 's/\r$//' {} + ; \
     fi; \
     chmod +x /opt/comfy-scripts/*.sh || true
 
