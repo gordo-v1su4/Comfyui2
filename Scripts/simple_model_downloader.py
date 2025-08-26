@@ -35,11 +35,28 @@ def setup_minio_client():
         result = subprocess.run(["which", "mc"], capture_output=True, text=True)
         if result.returncode != 0:
             print("📦 Installing MinIO client...")
-            subprocess.run([
-                "wget", "-q", 
-                "https://dl.min.io/client/mc/release/linux-amd64/mc",
-                "-O", "/tmp/mc"
-            ], check=True)
+            # Try wget, fall back to curl if wget is unavailable
+            got_mc = False
+            try:
+                subprocess.run([
+                    "wget", "-q",
+                    "https://dl.min.io/client/mc/release/linux-amd64/mc",
+                    "-O", "/tmp/mc"
+                ], check=True)
+                got_mc = True
+            except Exception:
+                # wget not present; try curl
+                try:
+                    subprocess.run([
+                        "curl", "-fsSL",
+                        "-o", "/tmp/mc",
+                        "https://dl.min.io/client/mc/release/linux-amd64/mc"
+                    ], check=True)
+                    got_mc = True
+                except Exception as e:
+                    raise RuntimeError(f"Failed to download mc: {e}")
+            if not got_mc:
+                raise RuntimeError("Could not download mc")
             subprocess.run(["chmod", "+x", "/tmp/mc"], check=True)
             mc_path = "/tmp/mc"
         else:
