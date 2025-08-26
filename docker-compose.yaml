@@ -1,42 +1,24 @@
-version: '3.8'
-
-# Named volumes for persistent data
-volumes:
-  models-storage:
-    driver: local
-  custom-nodes-storage:
-    driver: local
-
 services:
-  # Main ComfyUI service
   comfyui:
-    build: .
+    image: yanwk/comfyui-boot:cu128-slim
     container_name: comfyui-easy-install
     ports:
       - "8188:8188"
-    volumes:
-      # Instance-specific storage (local)
-      - ./output:/app/ComfyUI/output
-      - ./input:/app/ComfyUI/input
-      - ./temp:/app/ComfyUI/temp
-      - ./user:/app/ComfyUI/user
-      
-      # Model and Custom Node storage
-      - models-storage:/app/ComfyUI/models
-      - custom-nodes-storage:/app/ComfyUI/custom_nodes
     environment:
-      - PYTHONUNBUFFERED=1
+      - CLI_ARGS=--listen 0.0.0.0 --port 8188 --enable-cors-header "*"
       - PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512
       # GPU settings - required for GPU passthrough
       - NVIDIA_VISIBLE_DEVICES=all
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility
       
-      # S3/MinIO configuration to connect to EXISTING MinIO instance
-      - COMFYUI_S3_ENABLED=${COMFYUI_S3_ENABLE}
+      # S3/MinIO configuration (user uses MinIO)
+      - COMFYUI_S3_ENABLED=${COMFYUI_S3_ENABLED}
       - MINIO_ENDPOINT=${MINIO_ENDPOINT}
       - MINIO_ACCESS_KEY=${SERVICE_USER_MINIO}
       - MINIO_SECRET_KEY=${SERVICE_PASSWORD_MINIO}
       - MINIO_BUCKET_MODELS=${MINIO_BUCKET_MODELS}
+    volumes:
+      - ./storage:/root
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8188/"]

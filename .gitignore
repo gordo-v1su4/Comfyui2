@@ -229,3 +229,11 @@ ComfyUI-Easy-Install/
 Scripts/prepared_images/
 Resized/
 prepared_images/*
+
+# Runtime data (not tracked)
+storage/
+input/
+output/
+temp/
+user/
+custom_nodes/
