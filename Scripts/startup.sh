@@ -14,6 +14,13 @@ if [ -d /opt/comfy-scripts ]; then
     # Finally, sync all models from MinIO to the container's local storage
     if [ -n "${MINIO_ENDPOINT:-}" ]; then
       echo "🔄 Syncing models from MinIO to local container..."
+      # Ensure mc is installed
+      if ! command -v mc >/dev/null 2>&1; then
+        echo "Installing MinIO client..."
+        curl -fsSL -o /tmp/mc https://dl.min.io/client/mc/release/linux-amd64/mc && \
+        chmod +x /tmp/mc && \
+        mv /tmp/mc /usr/local/bin/mc
+      fi
       mc alias set myminio "$MINIO_ENDPOINT" "$SERVICE_USER_MINIO" "$SERVICE_PASSWORD_MINIO" || true
       mc mirror --overwrite --quiet myminio/"$MINIO_BUCKET_MODELS"/models /root/models || true
       echo "✅ MinIO sync complete."
