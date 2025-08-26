@@ -31,11 +31,7 @@ for NODE in */ ; do
       $PYTHON_BIN -m pip install --no-cache-dir -r "$CUSTOM_DIR/$NODE/$REQS" || true
     fi
   done
-  # Some repos use pip install .
-  if [ -f "$CUSTOM_DIR/$NODE/pyproject.toml" ] || [ -f "$CUSTOM_DIR/$NODE/setup.py" ]; then
-    echo "📦 Installing editable package for $NODE (if applicable)"
-    (cd "$CUSTOM_DIR/$NODE" && $PYTHON_BIN -m pip install --no-cache-dir -e .) || true
-  fi
+  # Skip editable installs to avoid packaging layout issues; requirements are sufficient for ComfyUI nodes.
   echo "✅ Finished deps for: $NODE"
   echo ""
 done
