@@ -22,7 +22,7 @@ services:
     container_name: comfyui2
     depends_on:
       comfyui-init:
-        condition: service_completed_successfully
+        condition: service_started
     ports:
       - "8188:8188"
     environment:
