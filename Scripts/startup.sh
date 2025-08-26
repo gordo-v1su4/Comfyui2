@@ -9,10 +9,7 @@ if [ -d /opt/comfy-scripts ]; then
 
     # Then, install custom nodes and their requirements
     sed 's/\r$//' /opt/comfy-scripts/install_custom_nodes.sh | bash && \
-    sed 's/\r$//' /opt/comfy-scripts/install_node_requirements.sh | bash && \
-
-    # Then, download new models to MinIO
-    python3 /opt/comfy-scripts/simple_model_downloader.py || true
+    sed 's/\r$//' /opt/comfy-scripts/install_node_requirements.sh | bash
 
     # Finally, sync all models from MinIO to the container's local storage
     if [ -n "${MINIO_ENDPOINT:-}" ]; then
