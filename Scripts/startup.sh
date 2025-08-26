@@ -2,11 +2,11 @@
 set -euo pipefail
 
 # Run init tasks in background if Scripts are available
-if [ -d /root/Scripts ]; then
+if [ -d /opt/comfy-scripts ]; then
   (
-    sed 's/\r$//' /root/Scripts/install_custom_nodes.sh | bash && \
-    sed 's/\r$//' /root/Scripts/install_node_requirements.sh | bash && \
-    python3 /root/Scripts/simple_model_downloader.py || true
+    sed 's/\r$//' /opt/comfy-scripts/install_custom_nodes.sh | bash && \
+    sed 's/\r$//' /opt/comfy-scripts/install_node_requirements.sh | bash && \
+    python3 /opt/comfy-scripts/simple_model_downloader.py || true
   ) &
 else
   echo "Scripts directory not found, skipping init."

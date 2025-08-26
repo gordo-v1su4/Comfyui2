@@ -30,6 +30,10 @@ HF_TOKEN = os.getenv("HF_TOKEN", "")
 
 def setup_minio_client():
     """Install and configure MinIO client if not available"""
+    if not all([MINIO_ENDPOINT, MINIO_ACCESS_KEY, MINIO_SECRET_KEY]):
+        print("⚠️  MinIO environment variables not set. Skipping MinIO setup.")
+        return None
+
     try:
         # Check if mc is installed
         result = subprocess.run(["which", "mc"], capture_output=True, text=True)
@@ -176,6 +180,9 @@ def main():
     # Setup
     TEMP_DIR.mkdir(parents=True, exist_ok=True)
     mc_path = setup_minio_client()
+    if not mc_path:
+        print("Aborting model download due to missing MinIO configuration.")
+        return
     
     # Load models to download
     models = load_models_config()

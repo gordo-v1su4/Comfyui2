@@ -5,21 +5,16 @@
 
 set -euo pipefail
 
-CUSTOM_LIST_FILE="$(dirname "$0")/custom_nodes.txt"
+CUSTOM_LIST_FILE="/opt/comfy-scripts/custom_nodes.txt"
 TARGET_DIR="/root/ComfyUI/custom_nodes"
 
-# Ensure ComfyUI repo exists to avoid runner clone conflicts
-if [ ! -d "/root/ComfyUI/.git" ]; then
-  echo "📥 Cloning ComfyUI core..."
-  mkdir -p /root/ComfyUI
-  git clone --depth=1 https://github.com/comfyanonymous/ComfyUI.git /root/ComfyUI || true
-fi
-
+# The base image is expected to contain the ComfyUI repository.
+# This script only ensures the custom_nodes directory exists.
 echo "🧩 Installing custom nodes into: $TARGET_DIR"
 mkdir -p "$TARGET_DIR"
 
 if [ ! -f "$CUSTOM_LIST_FILE" ]; then
-  echo "ℹ️  No custom_nodes.txt found at $CUSTOM_LIST_FILE. Skipping."
+  echo "ℹ️  No custom_nodes.txt found at $CUSTOM_LIST_FILE. Skipping custom node installation."
   exit 0
 fi
 

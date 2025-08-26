@@ -28,13 +28,15 @@ Thumbs.db
 docker-compose.yml
 .dockerignore
 
-# Scripts (keep only the main installation script)
-Scripts/
+# Scripts: include all scripts for the image build
+!Scripts/**
+
+# Exclude non-essential directories from build context
 FIXES/
 Update/
+
+# Ignore Windows batch files
 *.bat
-*.sh
-!ComfyUI-Easy-Install-Linux.sh
 
 # Images
 images/
