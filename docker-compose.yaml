@@ -21,12 +21,28 @@ services:
     volumes:
       - ./storage:/root
       - ./Scripts:/root/Scripts:ro
-    # Run init tasks in background, ensure user assets exist, then start ComfyUI runner in foreground.
-    command: ["bash","-lc","( sed 's/\\r$//' /root/Scripts/install_custom_nodes.sh | bash && sed 's/\\r$//' /root/Scripts/install_node_requirements.sh | bash && python3 /root/Scripts/simple_model_downloader.py || true ) & \
+    # Run init tasks in background (if present), ensure user assets exist, then start ComfyUI.
+    command: ["bash","-lc","\
+      if [ -d /root/Scripts ]; then \
+        ( sed 's/\\r$//' /root/Scripts/install_custom_nodes.sh | bash && \
+          sed 's/\\r$//' /root/Scripts/install_node_requirements.sh | bash && \
+          python3 /root/Scripts/simple_model_downloader.py || true ) & \
+      else \
+        echo 'Scripts directory not found, skipping init.'; \
+      fi; \
       mkdir -p /root/ComfyUI/user && \
       ( [ -f /root/ComfyUI/user/user.css ] || echo '/* user overrides */' > /root/ComfyUI/user/user.css ) && \
-      ( [ -f /root/ComfyUI/user/comfy.templates.json ] || echo '{\"templates\":[]}' > /root/ComfyUI/user/comfy.templates.json ) ; \
-      exec bash /runner-script"]
+      ( [ -f /root/ComfyUI/user/comfy.templates.json ] || echo '{\"templates\":[]}' > /root/ComfyUI/user/comfy.templates.json ); \
+      if [ -x /runner-script ]; then \
+        exec bash /runner-script; \
+      elif [ -f /root/ComfyUI/main.py ]; then \
+        echo 'runner-script missing, starting ComfyUI directly via python'; \
+        exec python3 -u /root/ComfyUI/main.py --listen 0.0.0.0 --port 8188 --enable-cors-header "*"; \
+      else \
+        echo 'ComfyUI entrypoint not found, sleeping for diagnostics'; \
+        sleep infinity; \
+      fi
+      "]
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8188/"]
