@@ -5,9 +5,10 @@ FROM yanwk/comfyui-boot:cu128-slim
 COPY Scripts /opt/comfy-scripts
 
 # Normalize line endings and ensure executables
-RUN set -eux; \
+RUN apt-get update && apt-get install -y findutils && \
+    set -eux; \
     if command -v sed >/dev/null 2>&1; then \
-      for f in /opt/comfy-scripts/*.sh; do [ -f "$f" ] && sed -i 's/\r$//' "$f" || true; done; \
+      find /opt/comfy-scripts -type f \( -name \"*.sh\" -o -name \"*.txt\" \) -exec sed -i 's/\r$//' {} + ; \
     fi; \
     chmod +x /opt/comfy-scripts/*.sh || true
 
