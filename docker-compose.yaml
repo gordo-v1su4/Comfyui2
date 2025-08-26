@@ -21,8 +21,12 @@ services:
     volumes:
       - ./storage:/root
       - ./Scripts:/root/Scripts:ro
-    # Run init tasks in background, then start ComfyUI runner in foreground.
-    command: ["bash","-lc","( sed 's/\\r$//' /root/Scripts/install_custom_nodes.sh | bash && sed 's/\\r$//' /root/Scripts/install_node_requirements.sh | bash && python3 /root/Scripts/simple_model_downloader.py || true ) & exec bash /runner-script"]
+    # Run init tasks in background, ensure user assets exist, then start ComfyUI runner in foreground.
+    command: ["bash","-lc","( sed 's/\\r$//' /root/Scripts/install_custom_nodes.sh | bash && sed 's/\\r$//' /root/Scripts/install_node_requirements.sh | bash && python3 /root/Scripts/simple_model_downloader.py || true ) & \
+      mkdir -p /root/ComfyUI/user && \
+      ( [ -f /root/ComfyUI/user/user.css ] || echo '/* user overrides */' > /root/ComfyUI/user/user.css ) && \
+      ( [ -f /root/ComfyUI/user/comfy.templates.json ] || echo '{\"templates\":[]}' > /root/ComfyUI/user/comfy.templates.json ) ; \
+      exec bash /runner-script"]
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8188/"]
