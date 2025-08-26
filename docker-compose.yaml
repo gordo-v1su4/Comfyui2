@@ -1,6 +1,6 @@
 services:
   comfyui:
-    image: gordov1su4/comfyui2:1.6
+    image: gordov1su4/comfyui2:1.7
     container_name: comfyui2
     ports:
       - "8188:8188"

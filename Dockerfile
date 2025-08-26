@@ -1,16 +1,21 @@
-# ComfyUI2 image built on cu128 base; bakes startup scripts for reliability
+# Stage 1: Use a standard image to fix line endings
+FROM debian:stable-slim as fixer
+
+# Install dos2unix
+RUN apt-get update && apt-get install -y dos2unix
+
+# Copy scripts and fix them
+COPY Scripts /scripts
+RUN find /scripts -type f -print0 | xargs -0 dos2unix
+
+# Stage 2: Use the comfyui base image
 FROM yanwk/comfyui-boot:cu128-slim
 
-# Copy scripts into image
-COPY Scripts /opt/comfy-scripts
+# Copy the corrected scripts from the fixer stage
+COPY --from=fixer /scripts /opt/comfy-scripts
 
-# Normalize line endings and ensure executables
-RUN apt-get update && apt-get install -y findutils && \
-    set -eux; \
-    if command -v sed >/dev/null 2>&1; then \
-      find /opt/comfy-scripts -type f -name "*.sh" -exec sed -i 's/\r$//' {} + ; \
-    fi; \
-    chmod +x /opt/comfy-scripts/*.sh || true
+# Ensure scripts are executable
+RUN chmod +x /opt/comfy-scripts/*.sh
 
 # Default command: robust startup wrapper
 CMD ["bash", "/opt/comfy-scripts/startup.sh"]
