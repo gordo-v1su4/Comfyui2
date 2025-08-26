@@ -14,7 +14,7 @@ services:
       - ./storage:/root
       - ./Scripts:/root/Scripts:ro
     # Install curated nodes and optionally download models to MinIO
-    command: ["bash", "-lc", "/root/Scripts/install_custom_nodes.sh && /root/Scripts/download_models_simple.sh || true"]
+    command: ["bash", "-lc", "/root/Scripts/install_custom_nodes.sh && /root/Scripts/install_node_requirements.sh && /root/Scripts/download_models_simple.sh || true"]
     restart: "no"
 
   comfyui:
